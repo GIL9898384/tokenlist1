@@ -2,16 +2,30 @@ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Chaves da Agora (use variáveis de ambiente para segurança)
-const APP_ID = process.env.AGORA_APP_ID || 'SUA_APP_ID_AQUI';
-const APP_CERTIFICATE = process.env.AGORA_APP_CERTIFICATE || 'SUA_APP_CERTIFICATE_AQUI';
+// IMPORTANTE: Use variáveis de ambiente para suas chaves e NÃO inclua fallbacks inseguros.
+const APP_ID = process.env.AGORA_APP_ID;
+const APP_CERTIFICATE = process.env.AGORA_APP_CERTIFICATE;
 
-// Gerador real de token da Agora
+// Gerador de token da Agora
 const { RtcTokenBuilder, RtcRole } = require('agora-access-token');
 
+// Middleware para analisar o corpo da requisição JSON
+app.use(express.json());
+
+// Lista dinâmica de lives (armazenada em memória - usar DB para produção)
+const livesBase = [];
+
+/**
+ * Gera um token da Agora para o canal e UID fornecidos.
+ * @param {string} channel - Nome do canal.
+ * @param {number} uid - UID do usuário.
+ * @param {RtcRole} role - Papel do usuário (PUBLISHER ou SUBSCRIBER).
+ * @param {number} expireSeconds - Tempo de expiração do token em segundos.
+ * @returns {string} O token RTC.
+ */
 function generateAgoraToken(channel, uid, role = RtcRole.PUBLISHER, expireSeconds = 3600) {
   if (!APP_ID || !APP_CERTIFICATE) {
-    throw new Error('APP_ID e APP_CERTIFICATE da Agora não configurados');
+    throw new Error('APP_ID ou APP_CERTIFICATE da Agora não configurados nas variáveis de ambiente.');
   }
   const currentTimestamp = Math.floor(Date.now() / 1000);
   const privilegeExpireTs = currentTimestamp + expireSeconds;
@@ -25,31 +39,53 @@ function generateAgoraToken(channel, uid, role = RtcRole.PUBLISHER, expireSecond
   );
 }
 
-// Lista dinâmica de lives (armazenada em memória)
-let livesBase = [];
-
-app.use(express.json());
+// ------------------------------------------------------------------
+// ENDPOINTS
+// ------------------------------------------------------------------
 
 // Endpoint para registrar uma nova live (POST)
+// NOTA: Este endpoint APENAS CRIA a entrada da live. O token do streamer
+// será gerado separadamente sob demanda, garantindo que seja sempre fresco.
 app.post('/lives', (req, res) => {
-  const live = req.body;
-  if (!live || !live.id || !live.streamerId || !live.name || !live.imageUrl || !live.agoraChannel || !live.streamerUid) {
+  const { id, streamerId, name, imageUrl, agoraChannel, streamerUid } = req.body;
+  if (!id || !streamerId || !name || !imageUrl || !agoraChannel || !streamerUid) {
     return res.status(400).json({ error: 'Dados obrigatórios ausentes.' });
   }
-  // Evita duplicidade de id
-  if (livesBase.some(l => l.id === live.id)) {
+  
+  // Evita duplicidade de ID
+  if (livesBase.some(l => l.id === id)) {
     return res.status(409).json({ error: 'Live com esse id já existe.' });
   }
-  // Gera e salva o token do streamer (PUBLISHER)
-  const streamerToken = generateAgoraToken(live.agoraChannel, live.streamerUid, RtcRole.PUBLISHER);
-  livesBase.push({ ...live, streamerToken });
-  res.status(201).json({ success: true });
+
+  const newLive = { id, streamerId, name, imageUrl, agoraChannel, streamerUid };
+  livesBase.push(newLive);
+  console.log(`Live registrada: ${name} no canal ${agoraChannel}`);
+  res.status(201).json({ success: true, live: newLive });
 });
 
-// Endpoint que retorna a lista de lives para o espectador
+// Endpoint para o streamer obter um token fresco para iniciar a live
+// Ele precisa fornecer o ID da live para que o servidor possa validá-la.
+app.get('/lives/:id/token/publisher', (req, res) => {
+  const { id } = req.params;
+  const live = livesBase.find(l => l.id === id);
+
+  if (!live) {
+    return res.status(404).json({ error: 'Live não encontrada.' });
+  }
+
+  try {
+    const token = generateAgoraToken(live.agoraChannel, live.streamerUid, RtcRole.PUBLISHER);
+    res.json({ token, uid: live.streamerUid, channel: live.agoraChannel });
+    console.log(`Token PUBLISHER gerado para a live: ${live.name}`);
+  } catch (err) {
+    console.error('Erro ao gerar token:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Endpoint que retorna a lista de lives para o espectador, com um token de SUBSCRIBER
 app.get('/lives', (req, res) => {
   try {
-    // UID do espectador pode vir da query, header ou ser gerado
     const viewerUid = req.query.viewerUid || Math.floor(Math.random() * 1000000);
     const livesWithToken = livesBase.map(live => ({
       ...live,
@@ -57,30 +93,9 @@ app.get('/lives', (req, res) => {
       viewerUid
     }));
     res.json(livesWithToken);
+    console.log(`Lista de lives enviada para o espectador (UID: ${viewerUid})`);
   } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Endpoint para o streamer pegar o token dele (caso precise)
-app.get('/lives/:id/streamer-token', (req, res) => {
-  const { id } = req.params;
-  const live = livesBase.find(l => l.id === id);
-  if (!live) return res.status(404).json({ error: 'Live não encontrada.' });
-  res.json({ streamerToken: live.streamerToken });
-});
-
-// Endpoint opcional para gerar token sob demanda
-app.get('/generate-token', (req, res) => {
-  const { channel, uid, role } = req.query;
-  if (!channel || !uid) {
-    return res.status(400).json({ error: 'channel e uid são obrigatórios' });
-  }
-  try {
-    const agoraRole = role === 'subscriber' ? RtcRole.SUBSCRIBER : RtcRole.PUBLISHER;
-    const token = generateAgoraToken(channel, uid, agoraRole);
-    res.json({ token });
-  } catch (err) {
+    console.error('Erro ao listar lives:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -92,10 +107,16 @@ app.delete('/lives/:id', (req, res) => {
   if (index === -1) {
     return res.status(404).json({ error: 'Live não encontrada.' });
   }
+  const liveName = livesBase[index].name;
   livesBase.splice(index, 1);
+  console.log(`Live encerrada: ${liveName}`);
   res.json({ success: true });
 });
 
+// Inicialização do servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
+  if (!APP_ID || !APP_CERTIFICATE) {
+    console.warn('AVISO: As chaves da Agora não estão configuradas. O servidor pode falhar ao gerar tokens.');
+  }
 });
