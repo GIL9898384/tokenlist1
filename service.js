@@ -5,6 +5,9 @@ const PORT = process.env.PORT || 3000;
 // IMPORTANTE: Use variáveis de ambiente para suas chaves e NÃO inclua fallbacks inseguros.
 const APP_ID = process.env.AGORA_APP_ID;
 const APP_CERTIFICATE = process.env.AGORA_APP_CERTIFICATE;
+// DEBUG: Mostra se as variáveis de ambiente estão presentes
+console.log('DEBUG AGORA_APP_ID:', APP_ID ? '[OK]' : '[FALTANDO]');
+console.log('DEBUG AGORA_APP_CERTIFICATE:', APP_CERTIFICATE ? '[OK]' : '[FALTANDO]');
 
 // Gerador de token da Agora
 const { RtcTokenBuilder, RtcRole } = require('agora-access-token');
@@ -27,9 +30,11 @@ function generateAgoraToken(channel, uid, role = RtcRole.PUBLISHER, expireSecond
   if (!APP_ID || !APP_CERTIFICATE) {
     throw new Error('APP_ID ou APP_CERTIFICATE da Agora não configurados nas variáveis de ambiente.');
   }
+  // DEBUG: Mostra parâmetros de geração de token
+  console.log('[DEBUG TOKEN] channel:', channel, '| uid:', uid, '| role:', role, '| expireSeconds:', expireSeconds);
   const currentTimestamp = Math.floor(Date.now() / 1000);
   const privilegeExpireTs = currentTimestamp + expireSeconds;
-  return RtcTokenBuilder.buildTokenWithUid(
+  const token = RtcTokenBuilder.buildTokenWithUid(
     APP_ID,
     APP_CERTIFICATE,
     channel,
@@ -37,9 +42,32 @@ function generateAgoraToken(channel, uid, role = RtcRole.PUBLISHER, expireSecond
     role,
     privilegeExpireTs
   );
+  if (!token) {
+    console.error('[DEBUG TOKEN] Token retornou vazio!');
+  }
+  return token;
 }
 
 // ------------------------------------------------------------------
+// Endpoint para o espectador obter um token de viewer para uma live específica
+app.get('/lives/:id/token/viewer', (req, res) => {
+  const { id } = req.params;
+  const { uid } = req.query;
+  const live = livesBase.find(l => l.id === id);
+
+  if (!live) {
+    return res.status(404).json({ error: 'Live não encontrada.' });
+  }
+
+  try {
+    const token = generateAgoraToken(live.agoraChannel, Number(uid), RtcRole.SUBSCRIBER);
+    res.json({ token, uid: Number(uid), channel: live.agoraChannel });
+    console.log(`Token SUBSCRIBER gerado para a live: ${live.name} | viewerUid: ${uid}`);
+  } catch (err) {
+    console.error('Erro ao gerar token de viewer:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 // ENDPOINTS
 // ------------------------------------------------------------------
 
@@ -86,14 +114,8 @@ app.get('/lives/:id/token/publisher', (req, res) => {
 // Endpoint que retorna a lista de lives para o espectador, com um token de SUBSCRIBER
 app.get('/lives', (req, res) => {
   try {
-    const viewerUid = req.query.viewerUid || Math.floor(Math.random() * 1000000);
-    const livesWithToken = livesBase.map(live => ({
-      ...live,
-      agoraToken: generateAgoraToken(live.agoraChannel, viewerUid, RtcRole.SUBSCRIBER),
-      viewerUid
-    }));
-    res.json(livesWithToken);
-    console.log(`Lista de lives enviada para o espectador (UID: ${viewerUid})`);
+    res.json(livesBase);
+    console.log('Lista de lives enviada para o espectador.');
   } catch (err) {
     console.error('Erro ao listar lives:', err.message);
     res.status(500).json({ error: err.message });
