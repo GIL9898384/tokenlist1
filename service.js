@@ -26,14 +26,17 @@ const livesBase = [];
  * @param {number} expireSeconds - Tempo de expiração do token em segundos.
  * @returns {string} O token RTC.
  */
-function generateAgoraToken(channel, uid, role = RtcRole.PUBLISHER, expireSeconds = 3600) {
+function generateAgoraToken(channel, uid, role = RtcRole.PUBLISHER, expireSeconds = 86400) {
   if (!APP_ID || !APP_CERTIFICATE) {
     throw new Error('APP_ID ou APP_CERTIFICATE da Agora não configurados nas variáveis de ambiente.');
   }
   // DEBUG: Mostra parâmetros de geração de token
-  console.log('[DEBUG TOKEN] channel:', channel, '| uid:', uid, '| role:', role, '| expireSeconds:', expireSeconds);
+  console.log('[DEBUG TOKEN] channel:', channel, '| uid:', uid, '| role:', role === RtcRole.PUBLISHER ? 'PUBLISHER' : 'SUBSCRIBER', '| expireSeconds:', expireSeconds);
   const currentTimestamp = Math.floor(Date.now() / 1000);
   const privilegeExpireTs = currentTimestamp + expireSeconds;
+  
+  console.log('[DEBUG TOKEN] Timestamps - current:', currentTimestamp, '| expire:', privilegeExpireTs);
+  
   const token = RtcTokenBuilder.buildTokenWithUid(
     APP_ID,
     APP_CERTIFICATE,
@@ -42,8 +45,11 @@ function generateAgoraToken(channel, uid, role = RtcRole.PUBLISHER, expireSecond
     role,
     privilegeExpireTs
   );
+  
   if (!token) {
     console.error('[DEBUG TOKEN] Token retornou vazio!');
+  } else {
+    console.log('[DEBUG TOKEN] Token gerado com sucesso! Length:', token.length);
   }
   return token;
 }
@@ -53,14 +59,22 @@ function generateAgoraToken(channel, uid, role = RtcRole.PUBLISHER, expireSecond
 app.get('/lives/:id/token/viewer', (req, res) => {
   const { id } = req.params;
   const { uid } = req.query;
+  
+  console.log(`[TOKEN REQUEST] Buscando live: ${id} para viewer UID: ${uid}`);
+  console.log(`[TOKEN REQUEST] Lives disponíveis: ${livesBase.map(l => l.id).join(', ')}`);
+  
   const live = livesBase.find(l => l.id === id);
 
   if (!live) {
+    console.error(`[TOKEN ERROR] Live ${id} não encontrada!`);
     return res.status(404).json({ error: 'Live não encontrada.' });
   }
 
+  console.log(`[TOKEN REQUEST] Live encontrada: ${live.name} | Canal: ${live.agoraChannel} | StreamerUID: ${live.streamerUid}`);
+
   try {
     const token = generateAgoraToken(live.agoraChannel, Number(uid), RtcRole.SUBSCRIBER);
+    console.log(`[TOKEN SUCCESS] Token gerado para viewer UID: ${uid} no canal: ${live.agoraChannel}`);
     res.json({ token, uid: Number(uid), channel: live.agoraChannel });
     console.log(`Token SUBSCRIBER gerado para a live: ${live.name} | viewerUid: ${uid}`);
   } catch (err) {
@@ -141,4 +155,21 @@ app.listen(PORT, () => {
   if (!APP_ID || !APP_CERTIFICATE) {
     console.warn('AVISO: As chaves da Agora não estão configuradas. O servidor pode falhar ao gerar tokens.');
   }
+  
+  // Criar live de teste "ana" se não existir
+  const testLive = {
+    id: 'live_67_1754580915214',
+    streamerId: '67',
+    name: 'Luana',
+    imageUrl: 'https://randomuser.me/api/portraits/women/1.jpg',
+    agoraChannel: 'ana',
+    streamerUid: 67
+  };
+  
+  if (!livesBase.some(l => l.id === testLive.id)) {
+    livesBase.push(testLive);
+    console.log(`[INIT] Live de teste criada: ${testLive.name} no canal ${testLive.agoraChannel}`);
+  }
+  
+  console.log(`[INIT] Lives disponíveis: ${livesBase.map(l => `${l.id} (canal: ${l.agoraChannel})`).join(', ')}`);
 });
