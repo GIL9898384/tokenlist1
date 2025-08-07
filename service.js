@@ -65,6 +65,12 @@ app.get('/lives/:id/token/viewer', (req, res) => {
   console.log(`[TOKEN REQUEST] Buscando live: ${id} para viewer UID: ${uid}`);
   console.log(`[TOKEN REQUEST] Lives disponíveis: ${livesBase.map(l => l.id).join(', ')}`);
   
+  // Validação do UID
+  if (!uid || isNaN(Number(uid))) {
+    console.error(`[TOKEN ERROR] UID inválido: ${uid}`);
+    return res.status(400).json({ error: 'UID deve ser um número válido.' });
+  }
+  
   const live = livesBase.find(l => l.id === id);
 
   if (!live) {
@@ -158,20 +164,7 @@ app.listen(PORT, () => {
     console.warn('AVISO: As chaves da Agora não estão configuradas. O servidor pode falhar ao gerar tokens.');
   }
   
-  // Criar live de teste "ana" se não existir
-  const testLive = {
-    id: 'live_67_1754580915214',
-    streamerId: '67',
-    name: 'Luana',
-    imageUrl: 'https://randomuser.me/api/portraits/women/1.jpg',
-    agoraChannel: 'ana',
-    streamerUid: 67
-  };
-  
-  if (!livesBase.some(l => l.id === testLive.id)) {
-    livesBase.push(testLive);
-    console.log(`[INIT] Live de teste criada: ${testLive.name} no canal ${testLive.agoraChannel}`);
-  }
-  
-  console.log(`[INIT] Lives disponíveis: ${livesBase.map(l => `${l.id} (canal: ${l.agoraChannel})`).join(', ')}`);
+  console.log('[INIT] Servidor de lives iniciado. Lives serão criadas dinamicamente pelos streamers.');
+  console.log('[INIT] Use POST /lives para criar uma nova live.');
+  console.log('[INIT] Use GET /lives para listar lives ativas.');
 });
