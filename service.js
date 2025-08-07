@@ -3,11 +3,13 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // IMPORTANTE: Use variáveis de ambiente para suas chaves e NÃO inclua fallbacks inseguros.
-const APP_ID = process.env.AGORA_APP_ID;
+const APP_ID = process.env.AGORA_APP_ID || 'b0f49e5d5d5e45ba94179b4465951612';
 const APP_CERTIFICATE = process.env.AGORA_APP_CERTIFICATE;
 // DEBUG: Mostra se as variáveis de ambiente estão presentes
 console.log('DEBUG AGORA_APP_ID:', APP_ID ? '[OK]' : '[FALTANDO]');
 console.log('DEBUG AGORA_APP_CERTIFICATE:', APP_CERTIFICATE ? '[OK]' : '[FALTANDO]');
+console.log('DEBUG APP_ID value:', APP_ID);
+console.log('DEBUG APP_CERTIFICATE value:', APP_CERTIFICATE ? 'PRESENTE' : 'AUSENTE');
 
 // Gerador de token da Agora
 const { RtcTokenBuilder, RtcRole } = require('agora-access-token');
