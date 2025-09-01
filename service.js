@@ -157,6 +157,17 @@ app.delete('/lives/:id', (req, res) => {
   res.json({ success: true });
 });
 
+// Live fake fixa para testes e navegação sem precisar iniciar uma live real
+// Remova ou comente este bloco quando não precisar mais da live fake
+livesBase.push({
+  id: '1756687168364',
+  streamerId: '1756687168364',
+  name: 'yure Ráda 🐈',
+  imageUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
+  agoraChannel: 'canal_fake',
+  streamerUid: 123456
+});
+
 // Inicialização do servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
