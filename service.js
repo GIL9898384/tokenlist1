@@ -107,7 +107,7 @@ app.post('/lives', (req, res) => {
     return res.status(409).json({ error: 'Live com esse id já existe.' });
   }
 
-  const newLive = { id, streamerId, name, imageUrl, agoraChannel, streamerUid };
+  const newLive = { id, streamerId, name, imageUrl, agoraChannel, streamerUid, lastHeartbeat: Math.floor(Date.now() / 1000) };
   livesBase.push(newLive);
   console.log(`Live registrada: ${name} no canal ${agoraChannel}`);
   res.status(201).json({ success: true, live: newLive });
@@ -136,8 +136,12 @@ app.get('/lives/:id/token/publisher', (req, res) => {
 // Endpoint que retorna a lista de lives para o espectador, com um token de SUBSCRIBER
 app.get('/lives', (req, res) => {
   try {
-    res.json(livesBase);
-    console.log('Lista de lives enviada para o espectador.');
+    const now = Math.floor(Date.now() / 1000);
+    const activeLives = livesBase.filter(live => {
+      return (now - (live.lastHeartbeat || 0)) < 90;
+    });
+    res.json(activeLives);
+    console.log('Lista de lives enviada para o espectador. Ativas:', activeLives.length);
   } catch (err) {
     console.error('Erro ao listar lives:', err.message);
     res.status(500).json({ error: err.message });
@@ -165,10 +169,21 @@ livesBase.push({
   name: 'yure Ráda 🐈',
   imageUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
   agoraChannel: 'canal_fake',
-  streamerUid: 123456
+  streamerUid: 123456,
+  lastHeartbeat: Math.floor(Date.now() / 1000)
 });
 
 // Inicialização do servidor
+// Endpoint para receber heartbeat da live
+app.post('/lives/:id/heartbeat', (req, res) => {
+  const { id } = req.params;
+  const live = livesBase.find(l => l.id === id);
+  if (!live) {
+    return res.status(404).json({ error: 'Live não encontrada.' });
+  }
+  live.lastHeartbeat = Math.floor(Date.now() / 1000);
+  res.json({ success: true, lastHeartbeat: live.lastHeartbeat });
+});
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
   if (!APP_ID || !APP_CERTIFICATE) {
