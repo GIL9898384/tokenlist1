@@ -163,15 +163,15 @@ app.delete('/lives/:id', (req, res) => {
 
 // Live fake fixa para testes e navegação sem precisar iniciar uma live real
 // Remova ou comente este bloco quando não precisar mais da live fake
-// livesBase.push({
-//   id: '1756687168364',
-//   streamerId: '1756687168364',
-//   name: 'yure Ráda 🐈',
-//   imageUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
-//   agoraChannel: 'canal_fake',
-//   streamerUid: 123456,
-//   lastHeartbeat: Math.floor(Date.now() / 1000)
-// });
+livesBase.push({
+  id: '1756687168364',
+  streamerId: '1756687168364',
+  name: 'yure Ráda 🐈',
+  imageUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
+  agoraChannel: 'canal_fake',
+  streamerUid: 123456,
+  lastHeartbeat: Math.floor(Date.now() / 1000)
+});
 
 // Inicialização do servidor
 // Endpoint para receber heartbeat da live
