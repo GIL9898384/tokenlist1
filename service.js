@@ -136,12 +136,17 @@ app.get('/lives/:id/token/publisher', (req, res) => {
 // Endpoint que retorna a lista de lives para o espectador, com um token de SUBSCRIBER
 app.get('/lives', (req, res) => {
   try {
-    const now = Math.floor(Date.now() / 1000);
-    const activeLives = livesBase.filter(live => {
-      return (now - (live.lastHeartbeat || 0)) < 90;
-    });
-    res.json(activeLives);
-    console.log('Lista de lives enviada para o espectador. Ativas:', activeLives.length);
+    // Para filtrar apenas lives ativas (últimos 90s), descomente abaixo:
+    // const now = Math.floor(Date.now() / 1000);
+    // const activeLives = livesBase.filter(live => {
+    //   return (now - (live.lastHeartbeat || 0)) < 90;
+    // });
+    // res.json(activeLives);
+    // console.log('Lista de lives enviada para o espectador. Ativas:', activeLives.length);
+
+    // Atualmente retorna todas as lives (inclui fake):
+    res.json(livesBase);
+    console.log('Lista de lives enviada para o espectador. Total:', livesBase.length);
   } catch (err) {
     console.error('Erro ao listar lives:', err.message);
     res.status(500).json({ error: err.message });
