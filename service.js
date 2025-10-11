@@ -97,7 +97,7 @@ app.get('/lives/:id/token/viewer', (req, res) => {
 // NOTA: Este endpoint APENAS CRIA a entrada da live. O token do streamer
 // será gerado separadamente sob demanda, garantindo que seja sempre fresco.
 app.post('/lives', (req, res) => {
-  const { id, streamerId, name, imageUrl, agoraChannel, streamerUid } = req.body;
+  const { id, streamerId, name, imageUrl, agoraChannel, streamerUid, title } = req.body;
   if (!id || !streamerId || !name || !imageUrl || !agoraChannel || !streamerUid) {
     return res.status(400).json({ error: 'Dados obrigatórios ausentes.' });
   }
@@ -107,9 +107,18 @@ app.post('/lives', (req, res) => {
     return res.status(409).json({ error: 'Live com esse id já existe.' });
   }
 
-  const newLive = { id, streamerId, name, imageUrl, agoraChannel, streamerUid, lastHeartbeat: Math.floor(Date.now() / 1000) };
+  const newLive = { 
+    id, 
+    streamerId, 
+    name, 
+    imageUrl, 
+    agoraChannel, 
+    streamerUid, 
+    title: title || '', 
+    lastHeartbeat: Math.floor(Date.now() / 1000) 
+  };
   livesBase.push(newLive);
-  console.log(`Live registrada: ${name} no canal ${agoraChannel}`);
+  console.log(`Live registrada: ${name} no canal ${agoraChannel} - Título: ${title || 'Sem título'}`);
   res.status(201).json({ success: true, live: newLive });
 });
 
@@ -175,6 +184,7 @@ livesBase.push({
   imageUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
   agoraChannel: 'canal_fake',
   streamerUid: 123456,
+  title: 'Live de Teste - Demonstração do App',
   lastHeartbeat: Math.floor(Date.now() / 1000)
 });
 
