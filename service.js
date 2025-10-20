@@ -180,7 +180,7 @@ app.delete('/lives/:id', (req, res) => {
 livesBase.push({
   id: '1756687168364',
   streamerId: '1756687168364',
-  name: 'yure Ráda 🐈',
+  name: 'lucas😎😍',
   imageUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
   agoraChannel: 'canal_fake',
   streamerUid: 123456,
