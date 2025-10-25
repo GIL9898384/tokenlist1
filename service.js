@@ -178,16 +178,50 @@ app.delete('/lives/:id', (req, res) => {
 
 // Live fake fixa para testes e navegação sem precisar iniciar uma live real
 // Remova ou comente este bloco quando não precisar mais da live fake
-livesBase.push({
-  id: '1756687168364',
-  streamerId: '1756687168364',
-  name: 'lucas😎😍',
-  imageUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
-  agoraChannel: 'canal_fake',
-  streamerUid: 123456,
-  title: 'Live de Teste - Demonstração do App',
-  coverImageUrl: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7',
-  lastHeartbeat: Math.floor(Date.now() / 1000)
+const fakeCovers = [
+  'https://res.aliiparty.com/room/cover/10417590-7a70774e79484159a30fc052e793dab8.jpg?v=1760990123405',
+  'https://res.aliiparty.com/room/cover/10986758-08c51df479da4a6b984e4848040b5750.jpg?v=1761387808035',
+  'https://res.aliiparty.com/room/cover/10527283-b2ca40f5df9043d4a110782bd06664c2.jpg?v=1761258249738',
+  'https://res.aliiparty.com/room/cover/10048055-c92e18ca9f31436caf459ea2d0e43698.jpg?v=1761175676668',
+  'https://res.aliiparty.com/room/cover/10908744-cd4ef4694b6746b0b25aacb2a666bac2.jpg?v=1761257141374',
+  'https://res.aliiparty.com/room/cover/10768883-f0866b7022ad4f1eaade56f74f116bbc.jpg?v=1759290950001',
+  'https://res.aliiparty.com/photo/10433920/1754732169618.jpg',
+  'https://res.aliiparty.com/room/cover/10911643-9a39fe0fc76b42aea2a710cda64db58d.jpg?v=1760483497655',
+  'https://res.aliiparty.com/room/cover/10473945-cde796f5f125444e83db0c0652ef8642.jpg?v=1761040245937',
+  'https://res.aliiparty.com/photo/10587329/508a0bfd410b4a4a95b6b18754fddd51.jpg',
+  'https://res.aliiparty.com/photo/10484904/1746119393613.jpg',
+  'https://res.aliiparty.com/photo/10962731/1752779021387.jpg?v=1752779021387',
+  'https://res.aliiparty.com/room/cover/10112057-554fddbf32524ada8a8aef0d493f2229.jpg?v=1758068486190',
+  'https://res.aliiparty.com/room/cover/10414689-2416f939b4d14defb8e1788b5c6ccc44.jpg?v=1756579161658',
+  'https://res.aliiparty.com/room/cover/10954016-07fe82170bb24cc0b850044182577ef5.jpg?v=1760740366400',
+  'https://res.aliiparty.com/room/cover/10580786-1501ff805c3047fba3b870af007021cf.jpg?v=1760391201415',
+  'https://res.aliiparty.com/room/cover/10586496-11d5c93969b5449bbc8517ff7871208e.jpg?v=1760102764423',
+  'https://res.aliiparty.com/room/cover/10416142-56a7d03229e44721a56162c5e3605a51.jpg?v=1759785375680',
+  'https://res.aliiparty.com/room/cover/10539051-001c99e7470f4310813fb5bcbc82d4cb.jpg?v=1760468127375',
+  'https://res.aliiparty.com/room/cover/10482736-46bf12928cce470384226afe5619539c.jpg?v=1757524131582',
+  'https://res.aliiparty.com/photo/10232772/1757038830975.jpg',
+  'https://res.aliiparty.com/room/cover/10947270-c904e93893204068bc8e6ed7f19b6f73.jpg?v=1761310563073',
+  'https://res.aliiparty.com/photo/10752652/12c5642649dd4e1f804a540dcd5c8f17.jpg',
+  'https://res.aliiparty.com/room/cover/10871722-8eb4f04a4e58462b94758f99851203ae.jpg?v=1760201746605',
+  'https://res.aliiparty.com/room/cover/10543499-927852810cb24c8fab8cfccf4d6e554a.jpg?v=1760650765844'
+];
+
+const fakeNames = ['Maria 💖', 'João 🎮', 'Ana 🌟', 'Pedro 🔥', 'Julia 💎', 'Lucas 😎', 'Camila 🌸', 'Rafael 🚀', 'Beatriz 💕', 'Gabriel 🎵', 'Larissa 🦋', 'Felipe 💪', 'Amanda 🌺', 'Thiago 🎯', 'Isabela 👑', 'Diego 🏆', 'Fernanda 🌙', 'Bruno 🎸', 'Leticia 💋', 'Rodrigo ⚡', 'Gabriela 🌹', 'Vinicius 🎭', 'Carolina 🍀', 'Leonardo 🌊', 'Patricia 💫'];
+
+const fakeTitles = ['Conversando com vocês! 💬', 'Bate-papo ao vivo 🎙️', 'Interação com os seguidores ✨', 'Respondendo perguntas 💭', 'Live tranquila 🌿', 'Jogando com os amigos 🎮', 'Cantando suas músicas 🎤', 'Mostrando meu dia 📸', 'Fazendo tutorial 📚', 'Desafios e brincadeiras 🎲', 'Conhecendo vocês melhor 💕', 'Compartilhando dicas 💡', 'Sessão de perguntas ❓', 'Hora do café ☕', 'Papo descontraído 😄', 'Contando histórias 📖', 'Novidades e updates 🆕', 'Agradecendo o carinho 🙏', 'Live especial 🎁', 'Curtindo com vocês 🎉', 'Música ao vivo 🎵', 'Divulgando projetos 🎬', 'Relaxando juntos 🌅', 'Festa virtual 🎊', 'Encontro com fãs 💖'];
+
+fakeCovers.forEach((cover, index) => {
+  livesBase.push({
+    id: `fake_${1756687168364 + index}`,
+    streamerId: `fake_${1756687168364 + index}`,
+    name: fakeNames[index],
+    imageUrl: `https://randomuser.me/api/portraits/${index % 2 === 0 ? 'women' : 'men'}/${(index % 50) + 1}.jpg`,
+    agoraChannel: `canal_fake_${index}`,
+    streamerUid: 123456 + index,
+    title: fakeTitles[index],
+    coverImageUrl: cover,
+    lastHeartbeat: Math.floor(Date.now() / 1000)
+  });
 });
 
 // Inicialização do servidor
