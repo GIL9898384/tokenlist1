@@ -186,6 +186,7 @@ livesBase.push({
   agoraChannel: 'canal_fake',
   streamerUid: 123456,
   title: 'Live de Teste - Demonstração do App',
+  coverImageUrl: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7',
   lastHeartbeat: Math.floor(Date.now() / 1000)
 });
 
