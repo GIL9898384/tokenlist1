@@ -97,7 +97,7 @@ app.get('/lives/:id/token/viewer', (req, res) => {
 // NOTA: Este endpoint APENAS CRIA a entrada da live. O token do streamer
 // será gerado separadamente sob demanda, garantindo que seja sempre fresco.
 app.post('/lives', (req, res) => {
-  const { id, streamerId, name, imageUrl, agoraChannel, streamerUid, title } = req.body;
+  const { id, streamerId, name, imageUrl, agoraChannel, streamerUid, title, coverImageUrl } = req.body;
   if (!id || !streamerId || !name || !imageUrl || !agoraChannel || !streamerUid) {
     return res.status(400).json({ error: 'Dados obrigatórios ausentes.' });
   }
@@ -115,10 +115,11 @@ app.post('/lives', (req, res) => {
     agoraChannel, 
     streamerUid, 
     title: title || '', 
+    coverImageUrl: coverImageUrl || null,
     lastHeartbeat: Math.floor(Date.now() / 1000) 
   };
   livesBase.push(newLive);
-  console.log(`Live registrada: ${name} no canal ${agoraChannel} - Título: ${title || 'Sem título'}`);
+  console.log(`Live registrada: ${name} no canal ${agoraChannel} - Título: ${title || 'Sem título'} - Capa: ${coverImageUrl ? 'Sim' : 'Não'}`);
   res.status(201).json({ success: true, live: newLive });
 });
 
