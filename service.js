@@ -206,16 +206,21 @@ const fakeCovers = [
   'https://res.aliiparty.com/room/cover/10543499-927852810cb24c8fab8cfccf4d6e554a.jpg?v=1760650765844'
 ];
 
-const fakeNames = ['Maria 💖', 'João 🎮', 'Ana 🌟', 'Pedro 🔥', 'Julia 💎', 'Lucas 😎', 'Camila 🌸', 'Rafael 🚀', 'Beatriz 💕', 'Gabriel 🎵', 'Larissa 🦋', 'Felipe 💪', 'Amanda 🌺', 'Thiago 🎯', 'Isabela 👑', 'Diego 🏆', 'Fernanda 🌙', 'Bruno 🎸', 'Leticia 💋', 'Rodrigo ⚡', 'Gabriela 🌹', 'Vinicius 🎭', 'Carolina 🍀', 'Leonardo 🌊', 'Patricia 💫'];
+const fakeNames = ['mkzinho 😇', 'Maria 💖', 'João 🎮', 'Ana 🌟', 'Pedro 🔥', 'Julia 💎', 'Lucas 😎', 'Camila 🌸', 'Rafael 🚀', 'Beatriz 💕', 'Gabriel 🎵', 'Larissa 🦋', 'Felipe 💪', 'Amanda 🌺', 'Thiago 🎯', 'Isabela 👑', 'Diego 🏆', 'Fernanda 🌙', 'Bruno 🎸', 'Leticia 💋', 'Rodrigo ⚡', 'Gabriela 🌹', 'Vinicius 🎭', 'Carolina 🍀', 'Leonardo 🌊', 'Patricia 💫'];
 
-const fakeTitles = ['Conversando com vocês! 💬', 'Bate-papo ao vivo 🎙️', 'Interação com os seguidores ✨', 'Respondendo perguntas 💭', 'Live tranquila 🌿', 'Jogando com os amigos 🎮', 'Cantando suas músicas 🎤', 'Mostrando meu dia 📸', 'Fazendo tutorial 📚', 'Desafios e brincadeiras 🎲', 'Conhecendo vocês melhor 💕', 'Compartilhando dicas 💡', 'Sessão de perguntas ❓', 'Hora do café ☕', 'Papo descontraído 😄', 'Contando histórias 📖', 'Novidades e updates 🆕', 'Agradecendo o carinho 🙏', 'Live especial 🎁', 'Curtindo com vocês 🎉', 'Música ao vivo 🎵', 'Divulgando projetos 🎬', 'Relaxando juntos 🌅', 'Festa virtual 🎊', 'Encontro com fãs 💖'];
+const fakeTitles = ['os melhores do ano 😇', 'Conversando com vocês! 💬', 'Bate-papo ao vivo 🎙️', 'Interação com os seguidores ✨', 'Respondendo perguntas 💭', 'Live tranquila 🌿', 'Jogando com os amigos 🎮', 'Cantando suas músicas 🎤', 'Mostrando meu dia 📸', 'Fazendo tutorial 📚', 'Desafios e brincadeiras 🎲', 'Conhecendo vocês melhor 💕', 'Compartilhando dicas 💡', 'Sessão de perguntas ❓', 'Hora do café ☕', 'Papo descontraído 😄', 'Contando histórias 📖', 'Novidades e updates 🆕', 'Agradecendo o carinho 🙏', 'Live especial 🎁', 'Curtindo com vocês 🎉', 'Música ao vivo 🎵', 'Divulgando projetos 🎬', 'Relaxando juntos 🌅', 'Festa virtual 🎊', 'Encontro com fãs 💖'];
 
 fakeCovers.forEach((cover, index) => {
+  // mkzinho tem foto de perfil específica
+  const profilePic = index === 0 
+    ? 'https://fake-api-backend-no5q.onrender.com/api/profile-pic/1756687168474'
+    : `https://randomuser.me/api/portraits/${index % 2 === 0 ? 'women' : 'men'}/${(index % 50) + 1}.jpg`;
+  
   livesBase.push({
     id: `fake_${1756687168364 + index}`,
-    streamerId: `fake_${1756687168364 + index}`,
+    streamerId: index === 0 ? '1756687168474' : `fake_${1756687168364 + index}`,
     name: fakeNames[index],
-    imageUrl: `https://randomuser.me/api/portraits/${index % 2 === 0 ? 'women' : 'men'}/${(index % 50) + 1}.jpg`,
+    imageUrl: profilePic,
     agoraChannel: `canal_fake_${index}`,
     streamerUid: 123456 + index,
     title: fakeTitles[index],
