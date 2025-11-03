@@ -17,8 +17,11 @@ const { RtcTokenBuilder, RtcRole } = require('agora-access-token');
 // Middleware para analisar o corpo da requisição JSON
 app.use(express.json());
 
-// Lista dinâmica de lives (armazenada em memória - usar DB para produção)
+// Lista dinâmica de lives REAIS (armazenada em memória - usar DB para produção)
 const livesBase = [];
+
+// Lista de lives FAKE para testes (separada das reais)
+const fakeLivesBase = [];
 
 /**
  * Gera um token da Agora para o canal e UID fornecidos.
@@ -63,7 +66,8 @@ app.get('/lives/:id/token/viewer', (req, res) => {
   const { uid } = req.query;
   
   console.log(`[TOKEN REQUEST] Buscando live: ${id} para viewer UID: ${uid}`);
-  console.log(`[TOKEN REQUEST] Lives disponíveis: ${livesBase.map(l => l.id).join(', ')}`);
+  console.log(`[TOKEN REQUEST] Lives REAIS disponíveis: ${livesBase.map(l => l.id).join(', ')}`);
+  console.log(`[TOKEN REQUEST] Lives FAKE disponíveis: ${fakeLivesBase.map(l => l.id).join(', ')}`);
   
   // Validação do UID
   if (!uid || isNaN(Number(uid))) {
@@ -71,7 +75,16 @@ app.get('/lives/:id/token/viewer', (req, res) => {
     return res.status(400).json({ error: 'UID deve ser um número válido.' });
   }
   
-  const live = livesBase.find(l => l.id === id);
+  // Busca primeiro nas lives reais, depois nas fake
+  let live = livesBase.find(l => l.id === id);
+  if (!live) {
+    live = fakeLivesBase.find(l => l.id === id);
+    if (live) {
+      console.log(`[TOKEN REQUEST] Live encontrada na lista FAKE`);
+    }
+  } else {
+    console.log(`[TOKEN REQUEST] Live encontrada na lista REAL`);
+  }
 
   if (!live) {
     console.error(`[TOKEN ERROR] Live ${id} não encontrada!`);
@@ -127,7 +140,11 @@ app.post('/lives', (req, res) => {
 // Ele precisa fornecer o ID da live para que o servidor possa validá-la.
 app.get('/lives/:id/token/publisher', (req, res) => {
   const { id } = req.params;
-  const live = livesBase.find(l => l.id === id);
+  // Busca primeiro nas lives reais, depois nas fake
+  let live = livesBase.find(l => l.id === id);
+  if (!live) {
+    live = fakeLivesBase.find(l => l.id === id);
+  }
 
   if (!live) {
     return res.status(404).json({ error: 'Live não encontrada.' });
@@ -146,17 +163,22 @@ app.get('/lives/:id/token/publisher', (req, res) => {
 // Endpoint que retorna a lista de lives para o espectador, com um token de SUBSCRIBER
 app.get('/lives', (req, res) => {
   try {
-    // Para filtrar apenas lives ativas (últimos 90s), descomente abaixo:
-    // const now = Math.floor(Date.now() / 1000);
-    // const activeLives = livesBase.filter(live => {
-    //   return (now - (live.lastHeartbeat || 0)) < 90;
-    // });
-    // res.json(activeLives);
-    // console.log('Lista de lives enviada para o espectador. Ativas:', activeLives.length);
+    // Filtra apenas lives reais ativas (últimos 90s)
+    const now = Math.floor(Date.now() / 1000);
+    const realActiveLives = livesBase.filter(live => {
+      return (now - (live.lastHeartbeat || 0)) < 90;
+    });
 
-    // Atualmente retorna todas as lives (inclui fake):
-    res.json(livesBase);
-    console.log('Lista de lives enviada para o espectador. Total:', livesBase.length);
+    // Se houver lives reais ativas, retorna só elas
+    if (realActiveLives.length > 0) {
+      res.json(realActiveLives);
+      console.log(`[LIVES] Lives REAIS retornadas: ${realActiveLives.length}`);
+      console.log(`[LIVES] IDs: ${realActiveLives.map(l => l.id).join(', ')}`);
+    } else {
+      // Se não houver lives reais, retorna as fake para teste
+      res.json(fakeLivesBase);
+      console.log(`[LIVES] Nenhuma live real ativa. Retornando ${fakeLivesBase.length} lives FAKE para teste.`);
+    }
   } catch (err) {
     console.error('Erro ao listar lives:', err.message);
     res.status(500).json({ error: err.message });
@@ -206,19 +228,18 @@ const fakeCovers = [
   'https://res.aliiparty.com/room/cover/10543499-927852810cb24c8fab8cfccf4d6e554a.jpg?v=1760650765844'
 ];
 
-const fakeNames = ['mkzinho 😇', 'Maria 💖', 'João 🎮', 'Ana 🌟', 'Pedro 🔥', 'Julia 💎', 'Lucas 😎', 'Camila 🌸', 'Rafael 🚀', 'Beatriz 💕', 'Gabriel 🎵', 'Larissa 🦋', 'Felipe 💪', 'Amanda 🌺', 'Thiago 🎯', 'Isabela 👑', 'Diego 🏆', 'Fernanda 🌙', 'Bruno 🎸', 'Leticia 💋', 'Rodrigo ⚡', 'Gabriela 🌹', 'Vinicius 🎭', 'Carolina 🍀', 'Leonardo 🌊', 'Patricia 💫'];
+const fakeNames = ['Lander 🎯', 'Maria 💖', 'João 🎮', 'Ana 🌟', 'Pedro 🔥', 'Julia 💎', 'Lucas 😎', 'Camila 🌸', 'Rafael 🚀', 'Beatriz 💕', 'Gabriel 🎵', 'Larissa 🦋', 'Felipe 💪', 'Amanda 🌺', 'Thiago 🎯', 'Isabela 👑', 'Diego 🏆', 'Fernanda 🌙', 'Bruno 🎸', 'Leticia 💋', 'Rodrigo ⚡', 'Gabriela 🌹', 'Vinicius 🎭', 'Carolina 🍀', 'Leonardo 🌊', 'Patricia 💫'];
 
 const fakeTitles = ['os melhores do ano 😇', 'Conversando com vocês! 💬', 'Bate-papo ao vivo 🎙️', 'Interação com os seguidores ✨', 'Respondendo perguntas 💭', 'Live tranquila 🌿', 'Jogando com os amigos 🎮', 'Cantando suas músicas 🎤', 'Mostrando meu dia 📸', 'Fazendo tutorial 📚', 'Desafios e brincadeiras 🎲', 'Conhecendo vocês melhor 💕', 'Compartilhando dicas 💡', 'Sessão de perguntas ❓', 'Hora do café ☕', 'Papo descontraído 😄', 'Contando histórias 📖', 'Novidades e updates 🆕', 'Agradecendo o carinho 🙏', 'Live especial 🎁', 'Curtindo com vocês 🎉', 'Música ao vivo 🎵', 'Divulgando projetos 🎬', 'Relaxando juntos 🌅', 'Festa virtual 🎊', 'Encontro com fãs 💖'];
 
+// Popula lista de lives FAKE (só para teste quando não há lives reais)
 fakeCovers.forEach((cover, index) => {
-  // mkzinho tem foto de perfil específica
-  const profilePic = index === 0 
-    ? 'https://fake-api-backend-no5q.onrender.com/api/profile-pic/1756687168474'
-    : `https://randomuser.me/api/portraits/${index % 2 === 0 ? 'women' : 'men'}/${(index % 50) + 1}.jpg`;
+  // Usa fotos aleatórias do randomuser.me para todos
+  const profilePic = `https://randomuser.me/api/portraits/${index % 2 === 0 ? 'women' : 'men'}/${(index % 50) + 1}.jpg`;
   
-  livesBase.push({
-    id: `fake_${1756687168364 + index}`,
-    streamerId: index === 0 ? '1756687168474' : `fake_${1756687168364 + index}`,
+  fakeLivesBase.push({
+    id: `fake_live_${10000 + index}`,
+    streamerId: `fake_streamer_${10000 + index}`,
     name: fakeNames[index],
     imageUrl: profilePic,
     agoraChannel: `canal_fake_${index}`,
@@ -228,6 +249,8 @@ fakeCovers.forEach((cover, index) => {
     lastHeartbeat: Math.floor(Date.now() / 1000)
   });
 });
+
+console.log(`[INIT] ${fakeLivesBase.length} lives FAKE carregadas para fallback (só aparecem quando não há lives reais).`);
 
 // Inicialização do servidor
 // Endpoint para receber heartbeat da live
