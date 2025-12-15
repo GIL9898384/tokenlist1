@@ -232,6 +232,25 @@ const fakeNames = ['Lander 🎯', 'Maria 💖', 'João 🎮', 'Ana 🌟', 'Pedro
 
 const fakeTitles = ['os melhores do ano 😇', 'Conversando com vocês! 💬', 'Bate-papo ao vivo 🎙️', 'Interação com os seguidores ✨', 'Respondendo perguntas 💭', 'Live tranquila 🌿', 'Jogando com os amigos 🎮', 'Cantando suas músicas 🎤', 'Mostrando meu dia 📸', 'Fazendo tutorial 📚', 'Desafios e brincadeiras 🎲', 'Conhecendo vocês melhor 💕', 'Compartilhando dicas 💡', 'Sessão de perguntas ❓', 'Hora do café ☕', 'Papo descontraído 😄', 'Contando histórias 📖', 'Novidades e updates 🆕', 'Agradecendo o carinho 🙏', 'Live especial 🎁', 'Curtindo com vocês 🎉', 'Música ao vivo 🎵', 'Divulgando projetos 🎬', 'Relaxando juntos 🌅', 'Festa virtual 🎊', 'Encontro com fãs 💖'];
 
+// Live FAKE com dados REAIS do usuário Liu
+fakeLivesBase.push({
+  id: 'fake_live_liu_real',
+  streamerId: '3c83b32b-cae3-410e-a079-683acc91d635',
+  firebaseUid: 'iz1gmufg6oXPVLaceHeE9QWSYKF2',
+  name: 'Liu social',
+  userName: 'Liu',
+  imageUrl: 'https://lh3.googleusercontent.com/a/ACg8ocIxZstabUgiHIDQvwQJYbj9AxkY4U…',
+  profilePicUrl: 'https://lh3.googleusercontent.com/a/ACg8ocIxZstabUgiHIDQvwQJYbj9AxkY4U…',
+  agoraChannel: 'canal_liu_real',
+  streamerUid: 999001,
+  title: 'Live do Liu 🎯 Conversando com vocês!',
+  coverImageUrl: 'https://res.aliiparty.com/room/cover/10417590-7a70774e79484159a30fc052e793dab8.jpg?v=1760990123405',
+  levelSvg: 'assets/icons/level0.png',
+  coins: 999067,
+  phone: '331009200601',
+  lastHeartbeat: Math.floor(Date.now() / 1000)
+});
+
 // Popula lista de lives FAKE (só para teste quando não há lives reais)
 fakeCovers.forEach((cover, index) => {
   // Usa fotos aleatórias do randomuser.me para todos
