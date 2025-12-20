@@ -282,6 +282,33 @@ app.post('/lives/:id/heartbeat', (req, res) => {
   live.lastHeartbeat = Math.floor(Date.now() / 1000);
   res.json({ success: true, lastHeartbeat: live.lastHeartbeat });
 });
+// ======================= ENDPOINT PARA GERAR TOKEN (PK BATTLES) =======================
+// Aceita requisição POST com { channel, uid, role }
+app.post('/access_token', (req, res) => {
+  const { channel, uid, role } = req.body;
+
+  // Validações
+  if (!channel || !uid) {
+    console.error('[ACCESS_TOKEN] Erro: channel ou uid faltando', { channel, uid });
+    return res.status(400).json({ error: 'channel e uid são obrigatórios' });
+  }
+
+  try {
+    // Determina o role da Agora
+    const agoraRole = role === 'publisher' ? RtcRole.PUBLISHER : RtcRole.SUBSCRIBER;
+    
+    console.log('[ACCESS_TOKEN] Gerando token:', { channel, uid, role: role || 'publisher' });
+    
+    const token = generateAgoraToken(channel, uid, agoraRole);
+    
+    res.json({ token });
+    console.log('[ACCESS_TOKEN] ✅ Token gerado com sucesso para canal:', channel, '| UID:', uid);
+  } catch (err) {
+    console.error('[ACCESS_TOKEN] ❌ Erro ao gerar token:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
   if (!APP_ID || !APP_CERTIFICATE) {
